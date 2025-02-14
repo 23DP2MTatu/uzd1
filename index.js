@@ -30,7 +30,7 @@ function parseFile(filePath) {
 
 function createTempPage(content, meta) {
     
-    const tempFileName = `page_${Date.now()}_${Math.random().toString(36).substring(2, 7)}.html`
+    const tempFileName = path.basename('content-pages/2024-08-21-historical-church.html')
     const tempFilePath = path.join("localTemp", tempFileName)
 
     pageContent = `
