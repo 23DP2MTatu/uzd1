@@ -1,9 +1,9 @@
 const fs = require('fs')
-const http = require('http')
+const http = require('http');
+const { console } = require('inspector');
 const PORT = 3000;
 const HOST = 'localhost'
 const path = require('path')
-const os = require('os')
 
 function parseFile(filePath) {
     
@@ -28,12 +28,26 @@ function parseFile(filePath) {
     return { metadata, htmlContent }
 }
 
-function createTempPage(content) {
+function createTempPage(content, meta) {
     
     const tempFileName = `page_${Date.now()}_${Math.random().toString(36).substring(2, 7)}.html`
-    const tempFilePath = path.join(os.tmpdir(), tempFileName)
+    const tempFilePath = path.join("localTemp", tempFileName)
 
-    fs.writeFileSync(tempFilePath, content)
+    pageContent = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${meta.title}</title>
+</head>
+<body>
+    ${content}
+</body>
+</html>
+    ` 
+
+    fs.writeFileSync(tempFilePath, pageContent)
 
     return {
         path: tempFilePath,
@@ -51,7 +65,7 @@ function createTempPage(content) {
 const server = http.createServer((req, res) => {
 
     const parsePage = parseFile('content-pages/2024-08-21-historical-church.html')
-    const tempPage = createTempPage(parsePage.htmlContent)
+    const tempPage = createTempPage(parsePage.htmlContent, parsePage.metadata)
 
     res.writeHead(200, {'Content-Type': 'text/html; charset=utf-8'})
     
