@@ -7,31 +7,29 @@ const path = require('path')
 
 function parseFile(filePath) {
     
-    const content = fs.readFileSync(filePath, 'utf-8')
-    const parts = content.split('---')
-
-    const metadata = {};
-    const htmlContent = parts[2].trim()
+    let content = fs.readFileSync(filePath, 'utf-8')
+    let parts = content.split('---')
+    let metadata = {};
+    let htmlContent = parts[2].trim()
 
     parts[1].trim().split('\n').forEach(line => {
         
-        const [key, ...value] = line.split(':')
-        const parsedValue = value.join(':').trim()
+        let [key, ...value] = line.split(':')
+        let parsedValue = value.join(':').trim()
         
         if (key.trim() === 'tags') {
-            metadata[key.trim()] = parsedValue.split(',').map(tag => tag.trim());
+            metadata[key.trim()] = parsedValue.split(',').map(tag => tag.trim())
         } else {
-            metadata[key.trim()] = parsedValue;
+            metadata[key.trim()] = parsedValue
         }
     })
     
-    return { metadata, htmlContent }
+    return { metadata, htmlContent}
 }
 
-function createTempPage(content, meta) {
+function createTempPage(content, meta, fileName) {
     
-    const tempFileName = path.basename('content-pages/2024-08-21-historical-church.html')
-    const tempFilePath = path.join("localTemp", tempFileName)
+    let tempFilePath = path.join("localTemp", fileName)
 
     pageContent = `
 <!DOCTYPE html>
@@ -48,31 +46,23 @@ function createTempPage(content, meta) {
     ` 
 
     fs.writeFileSync(tempFilePath, pageContent)
-
-    return {
-        path: tempFilePath,
-            cleanup: () => {
-            try {
-                fs.unlinkSync(tempFilePath)
-                console.log(`File deleted: ${tempFilePath}`)
-            } catch (err) {
-                console.error(`Error deleting file: ${err.message}`)
-            }
-        }
-    }
 }
 
 const server = http.createServer((req, res) => {
 
-    const parsePage = parseFile('content-pages/2024-08-21-historical-church.html')
-    const tempPage = createTempPage(parsePage.htmlContent, parsePage.metadata)
+    const files = fs.readdirSync("./content-pages")
+    const fileNames = files.filter(file => path.extname(file) === '.html' || path.extname(file) === '.txt')
+
+    fileNames.forEach(element => {
+        let parsePage = parseFile(`content-pages/${element}`)
+        createTempPage(parsePage.htmlContent, parsePage.metadata, element)
+    });
 
     res.writeHead(200, {'Content-Type': 'text/html; charset=utf-8'})
     
-    const stream = fs.createReadStream(tempPage.path)
+    let stream = fs.createReadStream('index.html')
 
     stream.pipe(res).on('finish', () => {
-        tempPage.cleanup()
     })
 })
 
